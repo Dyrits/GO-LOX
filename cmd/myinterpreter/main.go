@@ -19,6 +19,11 @@ func (scanner *Scanner) Scan(content string) {
 		';': "SEMICOLON",
 		'{': "LEFT_BRACE",
 		'}': "RIGHT_BRACE",
+		'=': "EQUAL",
+	}
+
+	doubles := map[string]string{
+		"==": "EQUAL_EQUAL",
 	}
 
 	errors := map[rune]string{
@@ -30,7 +35,15 @@ func (scanner *Scanner) Scan(content string) {
 
 	invalid := false
 
-	for _, character := range content {
+	for index := 0; index < len(content); index++ {
+		if (index + 1) < len(content) {
+			if name, exists := doubles[content[index:index+2]]; exists {
+				fmt.Println(fmt.Sprintf("%s %s null", name, content[index:index+2]))
+				index++
+				continue
+			}
+		}
+		character := rune(content[index])
 		if _, exists := errors[character]; exists {
 			fmt.Fprintln(os.Stderr, fmt.Sprintf("[line 1] Error: Unexpected character: %c", character))
 			invalid = true

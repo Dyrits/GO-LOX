@@ -8,36 +8,40 @@ import (
 type Scanner struct{}
 
 func (scanner *Scanner) Scan(content string) {
-	const (
-		LEFT_PAREN  rune = '('
-		RIGHT_PAREN rune = ')'
-		STAR        rune = '*'
-		MINUS       rune = '-'
-		PLUS        rune = '+'
-		COMMA       rune = ','
-		DOT         rune = '.'
-		SEMICOLON   rune = ';'
-		LEFT_BRACE  rune = '{'
-		RIGHT_BRACE rune = '}'
-	)
-
-	runeNames := map[rune]string{
-		LEFT_PAREN:  "LEFT_PAREN",
-		RIGHT_PAREN: "RIGHT_PAREN",
-		MINUS:       "MINUS",
-		STAR:        "STAR",
-		PLUS:        "PLUS",
-		COMMA:       "COMMA",
-		DOT:         "DOT",
-		SEMICOLON:   "SEMICOLON",
-		LEFT_BRACE:  "LEFT_BRACE",
-		RIGHT_BRACE: "RIGHT_BRACE",
+	tokens := map[rune]string{
+		'(': "LEFT_PAREN",
+		')': "RIGHT_PAREN",
+		'-': "MINUS",
+		'*': "STAR",
+		'+': "PLUS",
+		',': "COMMA",
+		'.': "DOT",
+		';': "SEMICOLON",
+		'{': "LEFT_BRACE",
+		'}': "RIGHT_BRACE",
 	}
 
+	errors := map[rune]string{
+		'#': "HASH",
+		'$': "DOLLAR",
+		'%': "PERCENT",
+		'@': "AT",
+	}
+
+	invalid := false
+
 	for _, character := range content {
-		if name, exists := runeNames[character]; exists {
-			fmt.Printf("%s %c null\n", name, character)
+		if _, exists := errors[character]; exists {
+			fmt.Fprintln(os.Stderr, fmt.Sprintf("[line 1] Error: Unexpected character: %c", character))
+			invalid = true
 		}
+		if name, exists := tokens[character]; exists {
+			fmt.Println(fmt.Sprintf("%s %c null", name, character))
+		}
+	}
+	fmt.Println("EOF  null")
+	if invalid {
+		os.Exit(65)
 	}
 }
 
@@ -67,7 +71,6 @@ func main() {
 	if len(content) > 0 {
 		scanner := &Scanner{}
 		scanner.Scan(string(content))
-		fmt.Println("EOF  null")
 	} else {
 		fmt.Println("EOF  null") // Placeholder, remove this line when implementing the scanner
 	}

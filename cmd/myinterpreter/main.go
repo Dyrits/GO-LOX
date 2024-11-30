@@ -16,6 +16,7 @@ func (scanner *Scanner) Scan(content string) {
 		PLUS        rune = '+'
 		COMMA       rune = ','
 		DOT         rune = '.'
+		SEMICOLON   rune = ';'
 		LEFT_BRACE  rune = '{'
 		RIGHT_BRACE rune = '}'
 	)
@@ -28,6 +29,7 @@ func (scanner *Scanner) Scan(content string) {
 		PLUS:        "PLUS",
 		COMMA:       "COMMA",
 		DOT:         "DOT",
+		SEMICOLON:   "SEMICOLON",
 		LEFT_BRACE:  "LEFT_BRACE",
 		RIGHT_BRACE: "RIGHT_BRACE",
 	}

@@ -11,19 +11,30 @@ func (scanner *Scanner) Scan(content string) {
 	const (
 		LEFT_PAREN  rune = '('
 		RIGHT_PAREN rune = ')'
+		STAR        rune = '*'
+		MINUS       rune = '-'
+		PLUS        rune = '+'
+		COMMA       rune = ','
+		DOT         rune = '.'
 		LEFT_BRACE  rune = '{'
 		RIGHT_BRACE rune = '}'
 	)
+
+	runeNames := map[rune]string{
+		LEFT_PAREN:  "LEFT_PAREN",
+		RIGHT_PAREN: "RIGHT_PAREN",
+		MINUS:       "MINUS",
+		STAR:        "STAR",
+		PLUS:        "PLUS",
+		COMMA:       "COMMA",
+		DOT:         "DOT",
+		LEFT_BRACE:  "LEFT_BRACE",
+		RIGHT_BRACE: "RIGHT_BRACE",
+	}
+
 	for _, character := range content {
-		switch character {
-		case LEFT_PAREN:
-			fmt.Println("LEFT_PAREN ( null")
-		case RIGHT_PAREN:
-			fmt.Println("RIGHT_PAREN ) null")
-		case LEFT_BRACE:
-			fmt.Println("LEFT_BRACE { null")
-		case RIGHT_BRACE:
-			fmt.Println("RIGHT_BRACE } null")
+		if name, exists := runeNames[character]; exists {
+			fmt.Printf("%s %c null\n", name, character)
 		}
 	}
 }

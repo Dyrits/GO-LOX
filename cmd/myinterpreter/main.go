@@ -7,17 +7,23 @@ import (
 
 type Scanner struct{}
 
-func (scanner *Scanner) Parentheses(content string) {
+func (scanner *Scanner) Scan(content string) {
 	const (
-		LEFT  rune = '('
-		RIGHT rune = ')'
+		LEFT_PAREN  rune = '('
+		RIGHT_PAREN rune = ')'
+		LEFT_BRACE  rune = '{'
+		RIGHT_BRACE rune = '}'
 	)
 	for _, character := range content {
 		switch character {
-		case LEFT:
+		case LEFT_PAREN:
 			fmt.Println("LEFT_PAREN ( null")
-		case RIGHT:
+		case RIGHT_PAREN:
 			fmt.Println("RIGHT_PAREN ) null")
+		case LEFT_BRACE:
+			fmt.Println("LEFT_BRACE { null")
+		case RIGHT_BRACE:
+			fmt.Println("RIGHT_BRACE } null")
 		}
 	}
 }
@@ -47,7 +53,7 @@ func main() {
 
 	if len(content) > 0 {
 		scanner := &Scanner{}
-		scanner.Parentheses(string(content))
+		scanner.Scan(string(content))
 		fmt.Println("EOF  null")
 	} else {
 		fmt.Println("EOF  null") // Placeholder, remove this line when implementing the scanner

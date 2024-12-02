@@ -8,7 +8,7 @@ import (
 type Scanner struct{}
 
 func (scanner *Scanner) Scan(content string) {
-	tokens := map[rune]string{
+	singles := map[rune]string{
 		'(': "LEFT_PAREN",
 		')': "RIGHT_PAREN",
 		'-': "MINUS",
@@ -37,6 +37,11 @@ func (scanner *Scanner) Scan(content string) {
 		"//": "COMMENT",
 	}
 
+	whitespaces := map[rune]string{
+		' ':  "SPACE",
+		'\t': "TAB",
+	}
+
 	errors := map[rune]string{
 		'#': "HASH",
 		'$': "DOLLAR",
@@ -47,27 +52,36 @@ func (scanner *Scanner) Scan(content string) {
 	invalid := false
 
 	for index := 0; index < len(content); index++ {
+		// Skip whitespaces.
+		if _, exists := whitespaces[rune(content[index])]; exists {
+			continue
+		}
 		if (index + 1) < len(content) {
-			if _, exists := comments[content[index:index+2]]; exists {
+			characters := content[index : index+2]
+			// Check for comments.
+			if _, exists := comments[characters]; exists {
 				// Skip the rest of the line.
 				for index < len(content) && content[index] != '\n' {
 					index++
 				}
 				continue
 			}
-			if name, exists := doubles[content[index:index+2]]; exists {
-				fmt.Println(fmt.Sprintf("%s %s null", name, content[index:index+2]))
+			// Check for double characters.
+			if name, exists := doubles[characters]; exists {
+				fmt.Println(fmt.Sprintf("%s %s null", name, characters))
 				index++
 				continue
 			}
 		}
 		character := rune(content[index])
+		// Check for single characters.
+		if name, exists := singles[character]; exists {
+			fmt.Println(fmt.Sprintf("%s %c null", name, character))
+		}
+		// Check for errors.
 		if _, exists := errors[character]; exists {
 			fmt.Fprintln(os.Stderr, fmt.Sprintf("[line 1] Error: Unexpected character: %c", character))
 			invalid = true
-		}
-		if name, exists := tokens[character]; exists {
-			fmt.Println(fmt.Sprintf("%s %c null", name, character))
 		}
 	}
 	fmt.Println("EOF  null")

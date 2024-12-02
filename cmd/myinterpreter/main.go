@@ -23,6 +23,7 @@ func (scanner *Scanner) Scan(content string) {
 		'!': "BANG",
 		'>': "GREATER",
 		'<': "LESS",
+		'/': "SLASH",
 	}
 
 	doubles := map[string]string{
@@ -30,6 +31,10 @@ func (scanner *Scanner) Scan(content string) {
 		"!=": "BANG_EQUAL",
 		">=": "GREATER_EQUAL",
 		"<=": "LESS_EQUAL",
+	}
+
+	comments := map[string]string{
+		"//": "COMMENT",
 	}
 
 	errors := map[rune]string{
@@ -43,6 +48,13 @@ func (scanner *Scanner) Scan(content string) {
 
 	for index := 0; index < len(content); index++ {
 		if (index + 1) < len(content) {
+			if _, exists := comments[content[index:index+2]]; exists {
+				// Skip the rest of the line.
+				for index < len(content) && content[index] != '\n' {
+					index++
+				}
+				continue
+			}
 			if name, exists := doubles[content[index:index+2]]; exists {
 				fmt.Println(fmt.Sprintf("%s %s null", name, content[index:index+2]))
 				index++

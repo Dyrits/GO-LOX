@@ -20,10 +20,12 @@ func (scanner *Scanner) Scan(content string) {
 		'{': "LEFT_BRACE",
 		'}': "RIGHT_BRACE",
 		'=': "EQUAL",
+		'!': "BANG",
 	}
 
 	doubles := map[string]string{
 		"==": "EQUAL_EQUAL",
+		"!=": "BANG_EQUAL",
 	}
 
 	errors := map[rune]string{

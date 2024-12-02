@@ -50,8 +50,14 @@ func (scanner *Scanner) Scan(content string) {
 	}
 
 	invalid := false
+	line := 1
 
 	for index := 0; index < len(content); index++ {
+		// Check for new lines.
+		if content[index] == '\n' {
+			line++
+			continue
+		}
 		// Skip whitespaces.
 		if _, exists := whitespaces[rune(content[index])]; exists {
 			continue
@@ -64,6 +70,7 @@ func (scanner *Scanner) Scan(content string) {
 				for index < len(content) && content[index] != '\n' {
 					index++
 				}
+				line++
 				continue
 			}
 			// Check for double characters.
@@ -80,7 +87,7 @@ func (scanner *Scanner) Scan(content string) {
 		}
 		// Check for errors.
 		if _, exists := errors[character]; exists {
-			fmt.Fprintln(os.Stderr, fmt.Sprintf("[line 1] Error: Unexpected character: %c", character))
+			fmt.Fprintln(os.Stderr, fmt.Sprintf("[line %d] Error: Unexpected character: %c", line, character))
 			invalid = true
 		}
 	}

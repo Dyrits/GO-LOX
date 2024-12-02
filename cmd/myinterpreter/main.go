@@ -49,6 +49,10 @@ func (scanner *Scanner) Scan(content string) {
 		'@': "AT",
 	}
 
+	wrappers := map[rune]string{
+		'"': "STRING",
+	}
+
 	invalid := false
 	line := 1
 
@@ -81,6 +85,22 @@ func (scanner *Scanner) Scan(content string) {
 			}
 		}
 		character := rune(content[index])
+		// Check for wrappers.
+		if name, exists := wrappers[character]; exists {
+			// Get the rest of the string.
+			start := index
+			end := index + 1
+			for end < len(content) && rune(content[end]) != character {
+				end++
+			}
+			if end == len(content) {
+				fmt.Fprintln(os.Stderr, fmt.Sprintf("[line %d] Error: Unterminated string.", line))
+				invalid = true
+				break
+			}
+			fmt.Println(fmt.Sprintf("%s %s %s", name, content[start:end+1], content[start+1:end]))
+			index = end
+		}
 		// Check for single characters.
 		if name, exists := singles[character]; exists {
 			fmt.Println(fmt.Sprintf("%s %c null", name, character))

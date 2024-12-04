@@ -2,12 +2,26 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"os"
+	"strconv"
 )
 
-type Scanner struct{}
+type Scanner struct {
+	line      int
+	index     int
+	exception bool
+	tokens    []string
+}
 
-func (scanner *Scanner) Scan(content string) {
+func (scanner *Scanner) PrintTokens() {
+	for _, token := range scanner.tokens {
+		fmt.Println(token)
+	}
+	fmt.Println("EOF  null")
+}
+
+func (scanner *Scanner) TokenizeSingle(character rune) {
 	singles := map[rune]string{
 		'(': "LEFT_PAREN",
 		')': "RIGHT_PAREN",
@@ -25,6 +39,20 @@ func (scanner *Scanner) Scan(content string) {
 		'<': "LESS",
 		'/': "SLASH",
 	}
+
+	if name, exists := singles[character]; exists {
+		token := fmt.Sprintf("%s %c null", name, character)
+		fmt.Println(token)
+		scanner.tokens = append(scanner.tokens, token)
+	}
+}
+
+func (scanner *Scanner) HandleUnexpected(character rune) {
+	fmt.Fprintln(os.Stderr, fmt.Sprintf("[line %d] Error: Unexpected character: %c", scanner.line, character))
+	scanner.exception = true
+}
+
+func (scanner *Scanner) Scan(content string) {
 
 	doubles := map[string]string{
 		"==": "EQUAL_EQUAL",
@@ -53,17 +81,37 @@ func (scanner *Scanner) Scan(content string) {
 		'"': "STRING",
 	}
 
-	invalid := false
-	line := 1
-
 	for index := 0; index < len(content); index++ {
 		// Check for new lines.
 		if content[index] == '\n' {
-			line++
+			scanner.line++
 			continue
 		}
 		// Skip whitespaces.
 		if _, exists := whitespaces[rune(content[index])]; exists {
+			continue
+		}
+		// Check for numbers.
+		if content[index] >= '0' && content[index] <= '9' {
+			start := index
+			for index < len(content) && content[index] >= '0' && content[index] <= '9' {
+				index++
+			}
+			if index < len(content) && content[index] == '.' {
+				index++
+				for index < len(content) && content[index] >= '0' && content[index] <= '9' {
+					index++
+				}
+			}
+			number := content[start:index]
+			float, _ := strconv.ParseFloat(number, 64)
+			if math.Mod(float, 1.0) == 0 {
+				number = strconv.FormatFloat(float, 'f', -1, 64) + ".0"
+			}
+			token := fmt.Sprintf("NUMBER %s %s", content[start:index], number)
+			fmt.Println(token)
+			scanner.tokens = append(scanner.tokens, token)
+			index--
 			continue
 		}
 		if (index + 1) < len(content) {
@@ -74,12 +122,14 @@ func (scanner *Scanner) Scan(content string) {
 				for index < len(content) && content[index] != '\n' {
 					index++
 				}
-				line++
+				scanner.line++
 				continue
 			}
 			// Check for double characters.
 			if name, exists := doubles[characters]; exists {
-				fmt.Println(fmt.Sprintf("%s %s null", name, characters))
+				token := fmt.Sprintf("%s %s null", name, characters)
+				fmt.Println(token)
+				scanner.tokens = append(scanner.tokens, token)
 				index++
 				continue
 			}
@@ -94,25 +144,22 @@ func (scanner *Scanner) Scan(content string) {
 				end++
 			}
 			if end == len(content) {
-				fmt.Fprintln(os.Stderr, fmt.Sprintf("[line %d] Error: Unterminated string.", line))
-				invalid = true
+				fmt.Fprintln(os.Stderr, fmt.Sprintf("[line %d] Error: Unterminated string.", scanner.line))
+				scanner.exception = true
 				break
 			}
-			fmt.Println(fmt.Sprintf("%s %s %s", name, content[start:end+1], content[start+1:end]))
+			token := fmt.Sprintf("%s %s %s", name, content[start:end+1], content[start+1:end])
+			fmt.Println(token)
+			scanner.tokens = append(scanner.tokens, token)
 			index = end
 		}
 		// Check for single characters.
-		if name, exists := singles[character]; exists {
-			fmt.Println(fmt.Sprintf("%s %c null", name, character))
-		}
+		scanner.TokenizeSingle(character)
 		// Check for errors.
-		if _, exists := errors[character]; exists {
-			fmt.Fprintln(os.Stderr, fmt.Sprintf("[line %d] Error: Unexpected character: %c", line, character))
-			invalid = true
-		}
+		scanner.HandleUnexpected(character)
 	}
 	fmt.Println("EOF  null")
-	if invalid {
+	if scanner.exception {
 		os.Exit(65)
 	}
 }
@@ -141,7 +188,12 @@ func main() {
 	}
 
 	if len(content) > 0 {
-		scanner := &Scanner{}
+		scanner := &Scanner{
+			line:      1,
+			index:     0,
+			exception: false,
+			tokens:    []string{},
+		}
 		scanner.Scan(string(content))
 	} else {
 		fmt.Println("EOF  null") // Placeholder, remove this line when implementing the scanner

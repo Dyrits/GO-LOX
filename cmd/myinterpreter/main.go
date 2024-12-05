@@ -5,6 +5,7 @@ import (
 	"math"
 	"os"
 	"strconv"
+	"unicode"
 )
 
 type Scanner struct {
@@ -48,8 +49,17 @@ func (scanner *Scanner) TokenizeSingle(character rune) {
 }
 
 func (scanner *Scanner) HandleUnexpected(character rune) {
-	fmt.Fprintln(os.Stderr, fmt.Sprintf("[line %d] Error: Unexpected character: %c", scanner.line, character))
-	scanner.exception = true
+	errors := map[rune]string{
+		'#': "HASH",
+		'$': "DOLLAR",
+		'%': "PERCENT",
+		'@': "AT",
+	}
+
+	if _, exists := errors[character]; exists {
+		fmt.Fprintln(os.Stderr, fmt.Sprintf("[line %d] Error: Unexpected character: %c", scanner.line, character))
+		scanner.exception = true
+	}
 }
 
 func (scanner *Scanner) Scan(content string) {
@@ -70,36 +80,31 @@ func (scanner *Scanner) Scan(content string) {
 		'\t': "TAB",
 	}
 
-	errors := map[rune]string{
-		'#': "HASH",
-		'$': "DOLLAR",
-		'%': "PERCENT",
-		'@': "AT",
-	}
-
 	wrappers := map[rune]string{
 		'"': "STRING",
 	}
 
 	for index := 0; index < len(content); index++ {
+		character := rune(content[index])
+
 		// Check for new lines.
-		if content[index] == '\n' {
+		if character == '\n' {
 			scanner.line++
 			continue
 		}
 		// Skip whitespaces.
-		if _, exists := whitespaces[rune(content[index])]; exists {
+		if _, exists := whitespaces[character]; exists {
 			continue
 		}
 		// Check for numbers.
-		if content[index] >= '0' && content[index] <= '9' {
+		if unicode.IsDigit(character) {
 			start := index
-			for index < len(content) && content[index] >= '0' && content[index] <= '9' {
+			for index < len(content) && unicode.IsDigit(rune(content[index])) {
 				index++
 			}
 			if index < len(content) && content[index] == '.' {
 				index++
-				for index < len(content) && content[index] >= '0' && content[index] <= '9' {
+				for index < len(content) && unicode.IsDigit(rune(content[index])) {
 					index++
 				}
 			}
@@ -107,8 +112,23 @@ func (scanner *Scanner) Scan(content string) {
 			float, _ := strconv.ParseFloat(number, 64)
 			if math.Mod(float, 1.0) == 0 {
 				number = strconv.FormatFloat(float, 'f', -1, 64) + ".0"
+			} else {
+				number = strconv.FormatFloat(float, 'f', -1, 64)
 			}
 			token := fmt.Sprintf("NUMBER %s %s", content[start:index], number)
+			fmt.Println(token)
+			scanner.tokens = append(scanner.tokens, token)
+			index--
+			continue
+		}
+		// Check for identifiers.
+		if unicode.IsLetter(character) || character == '_' {
+			start := index
+			for index < len(content) && (unicode.IsLetter(rune(content[index])) || unicode.IsDigit(rune(content[index])) || rune(content[index]) == '_') {
+				index++
+			}
+			identifier := content[start:index]
+			token := fmt.Sprintf("IDENTIFIER %s null", identifier)
 			fmt.Println(token)
 			scanner.tokens = append(scanner.tokens, token)
 			index--
@@ -134,7 +154,6 @@ func (scanner *Scanner) Scan(content string) {
 				continue
 			}
 		}
-		character := rune(content[index])
 		// Check for wrappers.
 		if name, exists := wrappers[character]; exists {
 			// Get the rest of the string.

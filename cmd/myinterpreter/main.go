@@ -104,7 +104,26 @@ func (scanner *Scanner) TokenizeNumber(content string) {
 
 }
 
-func (scanner *Scanner) TokenizeIdentifier(content string) {
+func (scanner *Scanner) TokenizeIdentifierOrKeyword(content string) {
+	keywords := map[string]string{
+		"and":    "AND",
+		"class":  "CLASS",
+		"else":   "ELSE",
+		"false":  "FALSE",
+		"for":    "FOR",
+		"fun":    "FUN",
+		"if":     "IF",
+		"nil":    "NIL",
+		"or":     "OR",
+		"print":  "PRINT",
+		"return": "RETURN",
+		"super":  "SUPER",
+		"this":   "THIS",
+		"true":   "TRUE",
+		"var":    "VAR",
+		"while":  "WHILE",
+	}
+
 	if scanner.index < len(content) {
 		character := rune(content[scanner.index])
 
@@ -115,10 +134,18 @@ func (scanner *Scanner) TokenizeIdentifier(content string) {
 				scanner.index++
 			}
 
-			identifier := content[start:scanner.index]
-			token := fmt.Sprintf("IDENTIFIER %s null", identifier)
-			fmt.Println(token)
-			scanner.tokens = append(scanner.tokens, token)
+			word := content[start:scanner.index]
+
+			if name, exists := keywords[word]; exists {
+				token := fmt.Sprintf("%s %s null", name, word)
+				fmt.Println(token)
+				scanner.tokens = append(scanner.tokens, token)
+			} else {
+				// If not a keyword, treat it as an identifier
+				token := fmt.Sprintf("IDENTIFIER %s null", word)
+				fmt.Println(token)
+				scanner.tokens = append(scanner.tokens, token)
+			}
 		}
 	}
 
@@ -232,7 +259,7 @@ func (scanner *Scanner) Scan(content string) {
 		scanner.Skip(content)
 		scanner.Comment(content)
 		scanner.TokenizeNumber(content)
-		scanner.TokenizeIdentifier(content)
+		scanner.TokenizeIdentifierOrKeyword(content)
 		scanner.TokenizeDouble(content)
 		scanner.TokenizeString(content)
 		scanner.TokenizeSingle(content)
